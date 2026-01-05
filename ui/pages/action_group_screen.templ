@@ -1,8 +1,10 @@
 package pages
 
 import (
+	"fmt"
 	"github.com/Zeglius/yafti-go/config"
 	"github.com/Zeglius/yafti-go/ui/components"
+	"strings"
 )
 
 // ActionGroupScreen displays a list of actions with toggles.
@@ -15,39 +17,36 @@ templ ActionGroupScreen(screen config.Screen) {
 				<h2 class="text-3xl font-bold mb-2">{ screen.Title }</h2>
 				<p class="text-gray-600">Select the options you'd like to install</p>
 			</div>
-
 			<div class="bg-white rounded-lg shadow-md p-6">
-				<form id="actionForm" method="POST" action="/confirm_changes" class="flex flex-col gap-4">
-					<input type="hidden" id="scriptIdsInput" name="scriptIds" value="{}"/>
-					
+				<div class="flex flex-col gap-4">
 					for _, act := range screen.Actions {
-						@components.ActionToggle(act)
+						<div class="bg-white border border-gray-200 rounded-lg mb-3 overflow-hidden">
+							<div class="flex items-center p-4">
+								<div class="flex-1">
+									<div class="flex items-center">
+										<h3 class="text-lg font-semibold">{ act.Title }</h3>
+										<div class="ml-auto">
+											<a href={ templ.URL(fmt.Sprintf("/apply_changes/%s", act.ID)) } class="btn btn-primary">Run</a>
+										</div>
+									</div>
+									<p class="text-gray-600 text-sm mt-1">{ act.Description }</p>
+									<details class="mt-2">
+										<summary class="text-sm text-violet-600 cursor-pointer hover:text-violet-800">View script</summary>
+										<div class="mt-2 bg-gray-100 p-3 rounded text-xs font-mono overflow-x-auto">
+											for _, line := range strings.Split(act.Script, "\n") {
+												<div>{ line }</div>
+											}
+										</div>
+									</details>
+								</div>
+							</div>
+						</div>
 					}
 					<div class="flex justify-between mt-6">
 						<a href="/" class="btn btn-outline">Back to Home</a>
-						<button type="button" class="btn btn-primary" onclick="prepareAndSubmit()">Continue</button>
 					</div>
-				</form>
+				</div>
 			</div>
 		</div>
-
-		<script>
-			function prepareAndSubmit() {
-				// Build a JSON object for selected actions
-				const selectedActions = {};
-				document.querySelectorAll('input[type="checkbox"][name="script_ids"]').forEach(checkbox => {
-					selectedActions[checkbox.value] = checkbox.checked ? 'true' : 'false';
-				});
-
-				// Set the cookie with the JSON data
-				document.cookie = "script_ids=" + JSON.stringify(selectedActions) + "; path=/; SameSite=Strict";
-				
-				// Also include the data in the form submission
-				document.getElementById('scriptIdsInput').value = JSON.stringify(selectedActions);
-				
-				// Submit the form
-				document.getElementById('actionForm').submit();
-			}
-		</script>
 	}
 }

@@ -26,7 +26,7 @@ require (
 
 require (
 	github.com/goccy/go-yaml v1.17.1
-	github.com/labstack/gommon v0.4.2
+	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.36.0 // indirect

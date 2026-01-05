@@ -9,8 +9,10 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"fmt"
 	"github.com/Zeglius/yafti-go/config"
 	"github.com/Zeglius/yafti-go/ui/components"
+	"strings"
 )
 
 // ActionGroupScreen displays a list of actions with toggles.
@@ -56,23 +58,81 @@ func ActionGroupScreen(screen config.Screen) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(screen.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/pages/action_group_screen.templ`, Line: 15, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/pages/action_group_screen.templ`, Line: 17, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2><p class=\"text-gray-600\">Select the options you'd like to install</p></div><div class=\"bg-white rounded-lg shadow-md p-6\"><form id=\"actionForm\" method=\"POST\" action=\"/confirm_changes\" class=\"flex flex-col gap-4\"><input type=\"hidden\" id=\"scriptIdsInput\" name=\"scriptIds\" value=\"{}\"> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2><p class=\"text-gray-600\">Select the options you'd like to install</p></div><div class=\"bg-white rounded-lg shadow-md p-6\"><div class=\"flex flex-col gap-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			for _, act := range screen.Actions {
-				templ_7745c5c3_Err = components.ActionToggle(act).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-white border border-gray-200 rounded-lg mb-3 overflow-hidden\"><div class=\"flex items-center p-4\"><div class=\"flex-1\"><div class=\"flex items-center\"><h3 class=\"text-lg font-semibold\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var4 string
+				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(act.Title)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/pages/action_group_screen.templ`, Line: 27, Col: 55}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h3><div class=\"ml-auto\"><a href=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var5 templ.SafeURL = templ.URL(fmt.Sprintf("/apply_changes/%s", act.ID))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var5)))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"btn btn-primary\">Run</a></div></div><p class=\"text-gray-600 text-sm mt-1\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(act.Description)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/pages/action_group_screen.templ`, Line: 32, Col: 64}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</p><details class=\"mt-2\"><summary class=\"text-sm text-violet-600 cursor-pointer hover:text-violet-800\">View script</summary><div class=\"mt-2 bg-gray-100 p-3 rounded text-xs font-mono overflow-x-auto\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				for _, line := range strings.Split(act.Script, "\n") {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var7 string
+					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(line)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/pages/action_group_screen.templ`, Line: 37, Col: 23}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></details></div></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"flex justify-between mt-6\"><a href=\"/\" class=\"btn btn-outline\">Back to Home</a> <button type=\"button\" class=\"btn btn-primary\" onclick=\"prepareAndSubmit()\">Continue</button></div></form></div></div><script>\n\t\t\tfunction prepareAndSubmit() {\n\t\t\t\t// Build a JSON object for selected actions\n\t\t\t\tconst selectedActions = {};\n\t\t\t\tdocument.querySelectorAll('input[type=\"checkbox\"][name=\"script_ids\"]').forEach(checkbox => {\n\t\t\t\t\tselectedActions[checkbox.value] = checkbox.checked ? 'true' : 'false';\n\t\t\t\t});\n\n\t\t\t\t// Set the cookie with the JSON data\n\t\t\t\tdocument.cookie = \"script_ids=\" + JSON.stringify(selectedActions) + \"; path=/; SameSite=Strict\";\n\t\t\t\t\n\t\t\t\t// Also include the data in the form submission\n\t\t\t\tdocument.getElementById('scriptIdsInput').value = JSON.stringify(selectedActions);\n\t\t\t\t\n\t\t\t\t// Submit the form\n\t\t\t\tdocument.getElementById('actionForm').submit();\n\t\t\t}\n\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"flex justify-between mt-6\"><a href=\"/\" class=\"btn btn-outline\">Back to Home</a></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

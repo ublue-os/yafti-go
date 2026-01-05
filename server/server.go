@@ -3,12 +3,10 @@ package server
 import (
 	"context"
 	"embed"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -136,142 +134,20 @@ func (s *Server) Start() error {
 		return nil
 	})
 
-	e.GET("/confirm_changes", func(c echo.Context) error {
-		// Step 1: Retrieve script IDs from cookie
-		scriptIdsCookie, err := c.Cookie("script_ids")
-		if err != nil || scriptIdsCookie.Value == "" {
-			c.String(http.StatusBadRequest, "Missing cookie 'script_ids'")
-			return err
-		}
-
-		// Step 2: Parse the JSON from cookie
-		var scriptIdsStrs map[string]string
-		if err := json.Unmarshal([]byte(scriptIdsCookie.Value), &scriptIdsStrs); err != nil {
-			return err
-		}
-
-		// Step 3: Extract selected script IDs (those marked as "true")
-		scriptIds := make([]string, 0, len(scriptIdsStrs))
-		for id, state := range scriptIdsStrs {
-			if state == "true" {
-				scriptIds = append(scriptIds, id)
-			}
-		}
-
-		// Step 4: Sort and remove duplicates
-		slices.Sort(scriptIds)
-		scriptIds = slices.Compact(scriptIds)
-
-		// Step 5: Get actions corresponding to the selected script IDs
-		actions, _ := config.ConfStatus.GetActionsByIds(scriptIds)
-
-		// Step 6: Render the confirmation page with selected actions
-		handler := newHandler(pages.ConfirmChanges(actions))
-		handler.ServeHTTP(c.Response(), c.Request())
-
-		return nil
-	})
-
-	// Update POST handler for confirm_changes
-	e.POST("/confirm_changes", func(c echo.Context) error {
-		var scriptIdsStrs map[string]string
-
-		// First try to get data from form submission
-		formValue := c.FormValue("scriptIds")
-		if formValue != "" {
-			if err := json.Unmarshal([]byte(formValue), &scriptIdsStrs); err == nil {
-				// Successfully got data from form submission
-				log.Println("Using script IDs from form data")
-			}
-		}
-
-		// If that didn't work, fall back to cookie
-		if scriptIdsStrs == nil {
-			scriptIdsCookie, cookieErr := c.Cookie("script_ids")
-			if cookieErr == nil && scriptIdsCookie.Value != "" {
-				if err := json.Unmarshal([]byte(scriptIdsCookie.Value), &scriptIdsStrs); err == nil {
-					// Successfully got data from cookie
-					log.Println("Using script IDs from cookie")
-				} else {
-					log.Printf("Error parsing cookie value: %v", err)
-				}
-			} else {
-				log.Printf("Cookie error or empty: %v", cookieErr)
-			}
-		}
-
-		// If we still don't have data, return error
-		if scriptIdsStrs == nil {
-			return c.String(http.StatusBadRequest, "No script IDs found in form data or cookies")
-		}
-
-		// Continue with the existing logic
-		scriptIds := make([]string, 0, len(scriptIdsStrs))
-		for id, state := range scriptIdsStrs {
-			if state == "true" {
-				scriptIds = append(scriptIds, id)
-			}
-		}
-
-		slices.Sort(scriptIds)
-		scriptIds = slices.Compact(scriptIds)
-
-		actions, _ := config.ConfStatus.GetActionsByIds(scriptIds)
-
-		handler := newHandler(pages.ConfirmChanges(actions))
-		handler.ServeHTTP(c.Response(), c.Request())
-
-		return nil
-	})
-
-	e.POST("/_/apply_changes", func(c echo.Context) error {
-		// Disable heartbeat while scripts are running
+	e.GET("/apply_changes/:id", func(c echo.Context) error {
 		config.Inhibit.Store(true)
+		defer config.Inhibit.Store(false)
 
-		// Get script IDs from the request payload
-		type Payload struct {
-			ScriptIds []string `form:"script_ids"`
+		actionId := c.Param("id")
+		if actionId == "" {
+			return c.String(http.StatusBadRequest, "missing action_id")
 		}
 
-		payload := Payload{}
-		if err := c.Bind(&payload); err != nil {
-			log.Printf("Failed to bind payload: %v", err)
-			return c.String(http.StatusBadRequest, "Invalid request format")
-		}
+		// Execute the action with the given ID
+		ExecuteActionWithId(actionId)
 
-		if len(payload.ScriptIds) == 0 {
-			log.Printf("No script IDs provided in request")
-			return c.String(http.StatusBadRequest, "No script IDs provided")
-		}
-
-		// Get actions corresponding to the script IDs
-		actions, found := config.ConfStatus.GetActionsByIds(payload.ScriptIds)
-		if !found || len(actions) == 0 {
-			log.Printf("No actions found for the provided script IDs")
-			return c.String(http.StatusBadRequest, "No actions found for the provided script IDs")
-		}
-
-		// Extract script commands from the actions
-		cmds := make([]string, 0, len(actions))
-		for _, action := range actions {
-			if action.Script != "" {
-				cmds = append(cmds, action.Script)
-			}
-		}
-
-		if len(cmds) == 0 {
-			log.Printf("No scripts found in the selected actions")
-			return c.String(http.StatusBadRequest, "Selected actions contain no scripts to execute")
-		}
-
-		handler := newHandler(pages.ApplyChanges(cmds))
-
-		handler.ServeHTTP(c.Response(), c.Request())
-
-		// Enable heartbeat after handler finishes processing the request
-		config.Inhibit.Store(false)
-
-		return nil
+		// Return to /
+		return c.Redirect(http.StatusFound, "/")
 	})
 
 	e.POST("/_/post_test", func(c echo.Context) error {

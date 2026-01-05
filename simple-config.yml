@@ -12,3 +12,9 @@ screens:
         description: "Another test action"
         default: false
         script: "echo 'Test action 2 executed'"
+      - id: test3
+        title: wow
+        script: |
+          echo "doing something..."
+          sleep 10
+          echo "done!"

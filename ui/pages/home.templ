@@ -13,12 +13,13 @@ templ Home() {
 				<h1 class="text-5xl font-bold mb-2 text-gray-800">Welcome to Bazzite!</h1>
 				<p class="text-gray-600 text-lg">Please select a configuration screen to begin</p>
 			</div>
-			
 			<div class="flex flex-col gap-3 max-w-md mx-auto w-full px-4">
 				if len(config.ConfStatus.Screens) > 0 {
 					for i, screen := range config.ConfStatus.Screens {
-						<a href={ templ.SafeURL("/action_group/" + strconv.Itoa(i)) } 
-						   class="h-14 flex items-center justify-center rounded-lg border-none bg-[#6446fa] hover:bg-[#5639e0] text-white font-medium text-center transition-all duration-200">
+						<a
+							href={ templ.SafeURL("/action_group/" + strconv.Itoa(i)) }
+							class="h-14 flex items-center justify-center rounded-lg border-none bg-[#6446fa] hover:bg-[#5639e0] text-white font-medium text-center transition-all duration-200"
+						>
 							{ screen.Title }
 						</a>
 					}
@@ -28,7 +29,6 @@ templ Home() {
 					</div>
 				}
 			</div>
-			
 			<div class="mt-auto text-center text-gray-500 text-xs py-4">
 				<p>Bazzite Portal • Powered by Yafti-Go</p>
 			</div>
