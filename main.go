@@ -13,6 +13,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+//go:generate go tool templ generate
+
 //go:embed static/**
 var static embed.FS
 

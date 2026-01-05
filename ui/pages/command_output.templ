@@ -1,56 +1,9 @@
 package pages
 
-import (
-	"os/exec"
-	"log"
-)
-
-// LaunchCommandInTerminal launches a command in a new terminal window
-templ LaunchCommandInTerminal(title, script string) {
-	{{
-		// Try different terminal emulators in order of preference
-		terminals := [][]string{
-			{"ptyxis", "-s", "--", "bash", "-c"},
-			{"gnome-terminal", "--", "bash", "-c"},
-			{"konsole", "-e", "bash", "-c"},
-			{"xfce4-terminal", "-e", "bash", "-c"},
-			{"xterm", "-e", "bash", "-c"},
-			{"alacritty", "-e", "bash", "-c"},
-			{"kitty", "bash", "-c"},
-		}
-		
-		// Wrap script to keep terminal open after execution
-		wrappedScript := script + "; echo '\n\nPress Enter to close...'; read"
-		
-		launched := false
-		for _, term := range terminals {
-			// Check if terminal exists
-			if _, err := exec.LookPath(term[0]); err == nil {
-				// Build command args
-				args := append(term[1:], wrappedScript)
-				cmd := exec.Command(term[0], args...)
-				
-				// Start the command in background
-				if err := cmd.Start(); err == nil {
-					launched = true
-					log.Printf("Launched command '%s' in %s", title, term[0])
-					break
-				} else {
-					log.Printf("Failed to launch %s: %v", term[0], err)
-				}
-			}
-		}
-		
-		if !launched {
-			log.Printf("Warning: Could not find a suitable terminal emulator")
-		}
-	}}
-	<div class="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg mt-2">
-		<div class="flex items-center">
-			<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-				<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-			</svg>
-			<span class="font-medium">Command launched in terminal window</span>
-		</div>
-	</div>
+templ LaunchCommandInTerminal(id, title, script string) {
+  <div class="mt-2">
+    <div class="text-sm text-gray-300 mb-1">{ title }</div>
+    <div id={"inline-term-" + id} data-inline-term={id} class="rounded" style="height:10rem;background:#000;"></div>
+  </div>
 }
+

@@ -113,10 +113,37 @@ templ Home() {
 					emptyState.classList.add('hidden');
 					results.classList.remove('hidden');
 
-					matches.forEach(({ item }) => {
+					matches.forEach(({ item }, i) => {
 						const clone = item.node.cloneNode(true);
-					results.appendChild(clone);
-				});
+						const suffix = '-search-' + i;
+
+						// Update all id attributes inside the clone to be unique
+						clone.querySelectorAll('[id]').forEach(function(el){
+							el.id = el.id + suffix;
+						});
+
+						// Update HTMX attributes that reference ids (hx-target, hx-indicator)
+						clone.querySelectorAll('[hx-target]').forEach(function(el){
+							const v = el.getAttribute('hx-target');
+							el.setAttribute('hx-target', v + suffix);
+						});
+						clone.querySelectorAll('[hx-indicator]').forEach(function(el){
+							const v = el.getAttribute('hx-indicator');
+							el.setAttribute('hx-indicator', v + suffix);
+						});
+
+						results.appendChild(clone);
+
+						// Tell htmx to process the new node so hx-* attributes become active
+						if (window.htmx && typeof htmx.process === 'function') {
+							try { htmx.process(clone); } catch(e) { console.error('htmx.process failed', e); }
+						}
+
+						// Initialize any inline xterm terminals inside the clone
+						if (window.initInlineTerms) {
+							try { initInlineTerms(clone); } catch(e) { console.error('initInlineTerms failed', e); }
+						}
+					});
 			}
 
 			render(input.value);

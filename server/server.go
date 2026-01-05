@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"strconv"
 	"sync"
 	"time"
@@ -15,6 +16,8 @@ import (
 	"github.com/Zeglius/yafti-go/internal/consts"
 	"github.com/Zeglius/yafti-go/ui/pages"
 	"github.com/a-h/templ"
+	"github.com/creack/pty"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -156,9 +159,81 @@ func (s *Server) Start() error {
 			return c.String(http.StatusBadRequest, "Action has no script to execute")
 		}
 
-		// Launch command in terminal
-		handler := newHandler(pages.LaunchCommandInTerminal(action.Title, action.Script))
+		// Launch command inline (websocket PTY)
+		handler := newHandler(pages.LaunchCommandInTerminal(actionID, action.Title, action.Script))
 		handler.ServeHTTP(c.Response(), c.Request())
+
+		return nil
+	})
+
+	// WebSocket endpoint to run a command inside a PTY and stream I/O
+	e.GET("/_/ws/exec/:actionId", func(c echo.Context) error {
+		actionID := c.Param("actionId")
+
+		// Find the action by ID
+		var action config.Action
+		found := false
+		for act := range config.ConfStatus.GetAllActions() {
+			if act.ID == actionID {
+				action = act
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return echo.NewHTTPError(http.StatusNotFound, "Action not found")
+		}
+
+		upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+		if err != nil {
+			return err
+		}
+
+		// Start the command in a PTY so interactive programs work
+		cmd := exec.Command("bash", "-c", action.Script)
+		ptmx, err := pty.Start(cmd)
+		if err != nil {
+			ws.WriteMessage(websocket.TextMessage, []byte("Error starting command: "+err.Error()))
+			ws.Close()
+			return nil
+		}
+
+		// PTY -> WebSocket
+		go func() {
+			defer func() {
+				ptmx.Close()
+				ws.Close()
+			}()
+			buf := make([]byte, 1024)
+			for {
+				n, err := ptmx.Read(buf)
+				if n > 0 {
+					// Send as binary so arbitrary bytes are preserved
+					if err := ws.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
+						return
+					}
+				}
+				if err != nil {
+					return
+				}
+			}
+		}()
+
+		// WebSocket -> PTY
+		for {
+			mt, message, err := ws.ReadMessage()
+			if err != nil {
+				// client closed
+				cmd.Process.Kill()
+				ptmx.Close()
+				break
+			}
+			if mt == websocket.TextMessage || mt == websocket.BinaryMessage {
+				_, _ = ptmx.Write(message)
+			}
+		}
 
 		return nil
 	})
