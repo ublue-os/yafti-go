@@ -1,0 +1,22 @@
+# Example go.mod additions for Fyne-based native GUI
+
+# Add to existing go.mod:
+
+require (
+    fyne.io/fyne/v2 v2.4.5
+    # ... existing dependencies
+)
+
+# Full example:
+module github.com/Zeglius/yafti-go
+
+go 1.21
+
+require (
+    fyne.io/fyne/v2 v2.4.5
+    github.com/goccy/go-yaml v1.11.3
+    golang.org/x/sync v0.6.0
+)
+
+# To install:
+# go get fyne.io/fyne/v2@latest
