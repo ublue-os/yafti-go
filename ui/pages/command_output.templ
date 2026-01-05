@@ -10,6 +10,7 @@ templ LaunchCommandInTerminal(title, script string) {
 	{{
 		// Try different terminal emulators in order of preference
 		terminals := [][]string{
+			{"ptyxis", "-s", "--", "bash", "-c"},
 			{"gnome-terminal", "--", "bash", "-c"},
 			{"konsole", "-e", "bash", "-c"},
 			{"xfce4-terminal", "-e", "bash", "-c"},
